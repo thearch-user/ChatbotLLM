@@ -1,23 +1,23 @@
 import wikipediaapi
 
-wiki = wikipediaapi.Wikipedia(
-    language="en",
-    extract_format=wikipediaapi.ExtractFormat.WIKI
-)
+wiki = wikipediaapi.Wikipedia(language="en",extract_format=wikipediaapi.ExtractFormat.WIKI)
 
 pages = [
     "Artificial intelligence",
     "Neural network",
     "Machine learning",
     "Computer science",
-    "Philosophy"
-    "Science"
-    "Biology"
-    "Mathematics"
-    "History"
-    "Technology"
-    "Quantum Computing"
-    "Geography"
+    "Philosophy",
+    "Science",
+    "Biology",
+    "Mathematics",
+    "History",
+    "Technology",
+    "Quantum Computing",
+    "Geography",
+    "Economics",
+    "Physics",
+    "General knowledge"
 ]
 
 out = open("datasets/wiki.txt", "w", encoding="utf-8")
