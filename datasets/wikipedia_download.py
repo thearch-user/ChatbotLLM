@@ -11,6 +11,13 @@ pages = [
     "Machine learning",
     "Computer science",
     "Philosophy"
+    "Science"
+    "Biology"
+    "Mathematics"
+    "History"
+    "Technology"
+    "Quantum Computing"
+    "Geography"
 ]
 
 out = open("datasets/wiki.txt", "w", encoding="utf-8")
