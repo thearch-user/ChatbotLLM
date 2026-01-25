@@ -1,68 +1,92 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Local LLM</title>
-<script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Local LLM</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 6px; }
+  </style>
 </head>
-<body class="bg-gradient-to-br from-zinc-900 to-black text-zinc-100 h-screen flex items-center justify-center">
-<div class="w-full max-w-4xl h-[92vh] rounded-3xl bg-zinc-900/80 backdrop-blur shadow-2xl flex flex-col">
+<body class="bg-gradient-to-br from-neutral-950 via-zinc-900 to-black text-zinc-100 h-screen flex items-center justify-center">
 
+  <div class="w-full max-w-5xl h-[94vh] rounded-[28px] bg-zinc-900/80 backdrop-blur-xl shadow-[0_0_120px_rgba(79,70,229,0.25)] flex flex-col overflow-hidden">
 
-<header class="p-6 text-2xl font-bold tracking-tight border-b border-zinc-800">
-ChatbotLLM
+```
+<!-- Header -->
+<header class="px-8 py-5 flex items-center justify-between border-b border-white/10">
+  <div class="text-2xl font-bold tracking-tight">🧠 Local LLM</div>
+  <div class="text-sm text-zinc-400">fully local · no api · no limits</div>
 </header>
 
+<!-- Chat -->
+<main id="chat" class="flex-1 overflow-y-auto px-8 py-6 space-y-6"></main>
 
-<main id="chat" class="flex-1 overflow-y-auto p-6 space-y-4"></main>
-
-
-<footer class="p-4 border-t border-zinc-800 flex gap-3">
-<input id="input" placeholder="Ask anything..."
-class="flex-1 bg-zinc-800/70 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500" />
-<button onclick="send()"
-class="px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 font-semibold">Send</button>
+<!-- Input -->
+<footer class="px-6 py-5 border-t border-white/10 bg-zinc-900/70">
+  <div class="flex items-end gap-4">
+    <textarea id="input" rows="1" placeholder="Ask anything…"
+      class="flex-1 resize-none bg-zinc-800/80 rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-inner"></textarea>
+    <button onclick="send()"
+      class="h-[52px] px-7 rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition font-semibold shadow-lg">
+      Send
+    </button>
+  </div>
 </footer>
+```
 
-
-</div>
-
+  </div>
 
 <script>
 const chat = document.getElementById('chat')
 const input = document.getElementById('input')
 
-
 function bubble(text, who) {
-const div = document.createElement('div')
-div.className = who === 'user'
-? 'ml-auto bg-indigo-600 px-5 py-3 rounded-3xl max-w-[70%]'
-: 'mr-auto bg-zinc-800 px-5 py-3 rounded-3xl max-w-[70%]'
-div.textContent = text
-chat.appendChild(div)
-chat.scrollTop = chat.scrollHeight
-}
+  const wrap = document.createElement('div')
+  wrap.className = who === 'user' ? 'flex justify-end' : 'flex justify-start'
 
+  const div = document.createElement('div')
+  div.className = who === 'user'
+    ? 'bg-indigo-600 text-white px-6 py-4 rounded-[22px] max-w-[70%] shadow-lg'
+    : 'bg-zinc-800 px-6 py-4 rounded-[22px] max-w-[70%] shadow'
+
+  div.textContent = text
+  wrap.appendChild(div)
+  chat.appendChild(wrap)
+  chat.scrollTop = chat.scrollHeight
+}
 
 async function send() {
-const msg = input.value.trim()
-if (!msg) return
-input.value = ''
-bubble(msg, 'user')
+  const msg = input.value.trim()
+  if (!msg) return
+  input.value = ''
+  input.style.height = 'auto'
+  bubble(msg, 'user')
 
-
-const res = await fetch('/chat', {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ message: msg })
-})
-const data = await res.json()
-bubble(data.reply, 'bot')
+  const res = await fetch('/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: msg })
+  })
+  const data = await res.json()
+  bubble(data.reply, 'bot')
 }
 
+input.addEventListener('input', () => {
+  input.style.height = 'auto'
+  input.style.height = input.scrollHeight + 'px'
+})
 
-input.addEventListener('keydown', e => e.key === 'Enter' && send())
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault()
+    send()
+  }
+})
 </script>
+
 </body>
 </html>
