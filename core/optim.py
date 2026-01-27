@@ -70,13 +70,11 @@ class SGD(Optimizer):
                 continue
             p.data -= self.lr * p.grad
 
-import numpy as np
 from core.tensor import Tensor
 from core.nn.linear import Linear
 from core.optim import SGD
 from core.data import batch_iterator
 
-# Fake dataset
 X = np.random.randn(1024, 10)
 Y = np.random.randn(1024, 1)
 

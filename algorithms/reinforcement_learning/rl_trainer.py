@@ -1,5 +1,7 @@
+from pyexpat import model
 import torch
 from torch.nn import functional as F
+from ChatbotLLM.core.optim import SGD
 
 class RLTrainer:
     def __init__(self, model, optimizer, reward_fn):
@@ -31,3 +33,5 @@ class RLTrainer:
         self.optimizer.step()
 
         return loss.item()
+
+optimizer = SGD(model.parameters(), lr=1e-3)

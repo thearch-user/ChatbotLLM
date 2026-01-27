@@ -1,5 +1,7 @@
 import torch
 from torch.nn import functional as F
+from ChatbotLLM.datasets.wikipedia_download import wiki
+from ChatbotLLM.core.optim import UniversalOptimizer, Optimizer
 
 class SemiSupervisedTrainer:
     def __init__(self, model, optimizer, confidence_threshold=0.9):
@@ -27,3 +29,10 @@ class SemiSupervisedTrainer:
         self.optimizer.step()
 
         return loss.item()
+
+    def train(self, unlabeled_data):
+        for batch in unlabeled_data:
+            UniversalOptimizer.step()
+            self.train_step(batch)
+            UniversalOptimizer.step()
+ 
