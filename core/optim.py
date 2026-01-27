@@ -47,3 +47,60 @@ class UniversalOptimizer:
                 
                 # Adaptive update
                 param -= self.lr * v_corr / (np.sqrt(s_corr) + self.eps)
+
+class Optimizer:
+    def __init__(self, params, lr):
+        self.params = params
+        self.lr = lr
+
+    def step(self):
+        raise NotImplementedError
+
+    def zero_grad(self):
+        for p in self.params:
+            p.grad = None
+
+class SGD(Optimizer):
+    def __init__(self, params, lr=1e-3):
+        super().__init__(params, lr)
+
+    def step(self):
+        for p in self.params:
+            if p.grad is None:
+                continue
+            p.data -= self.lr * p.grad
+
+import numpy as np
+from core.tensor import Tensor
+from core.nn.linear import Linear
+from core.optim import SGD
+from core.data import batch_iterator
+
+# Fake dataset
+X = np.random.randn(1024, 10)
+Y = np.random.randn(1024, 1)
+
+model = Linear(10, 1)
+optimizer = SGD([model.W, model.b], lr=1e-2)
+
+batch_size = 32
+epochs = 10
+
+for epoch in range(epochs):
+    epoch_loss = 0.0
+
+    for xb, yb in batch_iterator(X, Y, batch_size):
+        x = Tensor(xb, requires_grad=False)
+        y = Tensor(yb, requires_grad=False)
+
+        pred = model(x)
+        loss_val = ((pred.data - y.data) ** 2).mean()
+        loss = Tensor(loss_val, requires_grad=True)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        epoch_loss += loss_val
+
+    print(f"Epoch {epoch}: loss={epoch_loss:.4f}")
