@@ -9,3 +9,6 @@ class Linear:
 
     def __call__(self, x):
         return matmul(x, self.W) + self.b
+
+    def parameters(self):
+        return [self.W, self.b]

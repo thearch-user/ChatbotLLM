@@ -1,134 +1,158 @@
+import os
 import math
-import torch
 import random
-from torch.nn import functional as F
-from torch.utils.data import Dataset, DataLoader
+import numpy as np
+import pickle
+from glob import glob
+from typing import List
 
-from ChatbotLLM.model.model import Transformer
-from ChatbotLLM.tokenizor import tokenizor
+from model.model import Transformer
+from core.tensor import Tensor
+from core.optim import UniversalOptimizer
+from core.ops import cross_entropy
+from tokenizor import tokenizor_train
 
+# ---------------------------
+# Config
+# ---------------------------
 
-# =====================
-# CONFIG
-# =====================
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
-BATCH_SIZE = 8
-SEQ_LEN = 256
-EPOCHS = 3
+BATCH_SIZE = 4 # Reduced for CPU/Custom autograd performance
+SEQ_LEN = 128  # Reduced for performance
 LR = 3e-4
+WEIGHT_DECAY = 0.1
+EPOCHS = 1
 GRAD_CLIP = 1.0
+LOG_EVERY = 10
+SAVE_EVERY = 100
 
-DATA_PATH = "datasets/wiki/wiki.txt"
+DATASET_DIR = "datasets"
+CHECKPOINT_DIR = "checkpoints"
 
-
-# =====================
-# SIMPLE DATASET
-# =====================
-class TextDataset(Dataset):
-    def __init__(self, path, tokenizer, seq_len):
-        with open(path, "r", encoding="utf-8") as f:
-            text = f.read()
-
-        tokens = tokenizer.encode(text)
-        self.data = torch.tensor(tokens, dtype=torch.long)
-        self.seq_len = seq_len
-
-    def __len__(self):
-        return len(self.data) - self.seq_len - 1
-
-    def __getitem__(self, idx):
-        x = self.data[idx : idx + self.seq_len]
-        y = self.data[idx + 1 : idx + self.seq_len + 1]
-        return x, y
+os.makedirs(CHECKPOINT_DIR, exist_ok=True)
 
 
-# =====================
-# MINI-BATCH SGD (SIMPLE)
-# =====================
-class SGD:
-    def __init__(self, params, lr):
-        self.params = list(params)
-        self.lr = lr
+# ---------------------------
+# Dataset Loader
+# ---------------------------
 
-    def zero_grad(self):
-        for p in self.params:
-            if p.grad is not None:
-                p.grad.zero_()
-
-    def step(self):
-        for p in self.params:
-            if p.grad is None:
-                continue
-            p.data -= self.lr * p.grad
+def load_all_texts() -> List[str]:
+    files = glob(f"{DATASET_DIR}/**/*.txt", recursive=True)
+    texts = []
+    for f in files:
+        with open(f, "r", encoding="utf-8", errors="ignore") as file:
+            texts.append(file.read())
+    return texts
 
 
-# =====================
-# TRAINING LOOP
-# =====================
+def build_token_stream(tokenizer, texts):
+    token_stream = []
+    for text in texts:
+        ids = tokenizer.encode(text)
+        token_stream.extend(ids)
+    return np.array(token_stream, dtype=np.int32)
+
+
+def get_batch(token_stream):
+    ix = np.random.randint(0, len(token_stream) - SEQ_LEN - 1, (BATCH_SIZE,))
+    x_data = np.stack([token_stream[i:i+SEQ_LEN] for i in ix])
+    y_data = np.stack([token_stream[i+1:i+SEQ_LEN+1] for i in ix])
+    
+    x = Tensor(x_data, requires_grad=False)
+    y = Tensor(y_data, requires_grad=False)
+    return x, y
+
+
+# ---------------------------
+# Training
+# ---------------------------
+
 def train():
-    dataset = TextDataset(
-        path=DATA_PATH,
-        tokenizer=tokenizor,
-        seq_len=SEQ_LEN,
-    )
+    print("🔥 Loading tokenizer")
+    tokenizer = tokenizor_train.load_tokenizer("tokenizer.json")
 
-    dataloader = DataLoader(
-        dataset,
-        batch_size=BATCH_SIZE,
-        shuffle=True,
-        drop_last=True,
-    )
+    print("📚 Loading datasets")
+    texts = load_all_texts()
+    if not texts:
+        print("⚠️ No text files found in datasets directory. Creating dummy stream.")
+        token_stream = np.random.randint(0, tokenizer.vocab_size, (10000,), dtype=np.int32)
+    else:
+        token_stream = build_token_stream(tokenizer, texts)
 
-    model = Transformer().to(DEVICE)
+    print(f"🧮 Total tokens: {len(token_stream):,}")
+
+    print("🧠 Initializing model")
+    # Using smaller dimensions for custom autograd speed
+    model = Transformer(
+        vocab_size=tokenizer.vocab_size,
+        d_model=256,
+        max_seq_len=SEQ_LEN,
+        n_heads=4,
+        n_layers=4,
+        dropout_rate=0.1
+    )
     model.train()
 
-    optimizer = SGD(model.parameters(), lr=LR)
+    optimizer = UniversalOptimizer(
+        model.parameters(),
+        lr=LR,
+        method='adam',
+        weight_decay=WEIGHT_DECAY,
+        betas=(0.9, 0.95)
+    )
 
-    global_step = 0
+    step = 0
+
+    print("🚀 Starting training")
 
     for epoch in range(EPOCHS):
-        total_loss = 0.0
+        print(f"\n🌍 Epoch {epoch+1}/{EPOCHS}")
 
-        for step, (tokens, targets) in enumerate(dataloader):
-            tokens = tokens.to(DEVICE)
-            targets = targets.to(DEVICE)
+        num_batches = len(token_stream) // (BATCH_SIZE * SEQ_LEN)
+        for b in range(num_batches):
+            x, y = get_batch(token_stream)
 
-            # ── Forward ───────────────────────
-            logits = model(tokens)   # [B, T, V]
-
-            loss = F.cross_entropy(
-                logits.view(-1, logits.size(-1)),
-                targets.view(-1),
-            )
-
-            # ── Backward ──────────────────────
             optimizer.zero_grad()
+
+            # Forward pass
+            logits = model(x)
+            
+            # Loss calculation
+            loss = cross_entropy(logits, y)
+
+            # Backward pass
             loss.backward()
 
-            torch.nn.utils.clip_grad_norm_(
-                model.parameters(),
-                GRAD_CLIP,
-            )
+            # Gradient clipping (manual implementation)
+            if GRAD_CLIP > 0:
+                total_norm = 0
+                params = model.parameters()
+                for p in params:
+                    if p.grad is not None:
+                        total_norm += np.sum(p.grad**2)
+                total_norm = np.sqrt(total_norm)
+                clip_coef = GRAD_CLIP / (total_norm + 1e-6)
+                if clip_coef < 1:
+                    for p in params:
+                        if p.grad is not None:
+                            p.grad *= clip_coef
 
+            # Optimizer step
             optimizer.step()
 
-            total_loss += loss.item()
-            global_step += 1
+            if step % LOG_EVERY == 0:
+                print(f"step {step:05d} | loss {loss.data:.4f}")
 
-            if step % 50 == 0:
-                print(
-                    f"epoch {epoch} | step {step} | "
-                    f"loss {loss.item():.4f} | "
-                    f"ppl {math.exp(loss.item()):.2f}"
-                )
+            if step % SAVE_EVERY == 0 and step > 0:
+                ckpt_path = f"{CHECKPOINT_DIR}/model_step_{step}.pkl"
+                # Save model parameters using pickle
+                params_data = [p.data for p in model.parameters()]
+                with open(ckpt_path, "wb") as f:
+                    pickle.dump(params_data, f)
+                print(f"💾 Saved checkpoint {ckpt_path}")
 
-        avg_loss = total_loss / len(dataloader)
-        print(
-            f"\n✅ Epoch {epoch} DONE | "
-            f"avg loss {avg_loss:.4f} | "
-            f"ppl {math.exp(avg_loss):.2f}\n"
-        )
+            step += 1
+
+    print("✅ Training complete")
 
 
 if __name__ == "__main__":
