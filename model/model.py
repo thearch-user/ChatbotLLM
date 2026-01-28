@@ -1,6 +1,10 @@
 import torch
 import torch.nn as nn
+import pandas as pd
 from model.model_args import ModelArgs
+
+dataset1 = open("ChatbotLLM/datastes/wiki.txt")
+dataset = open("ChatbotLLM/datasets")
 
 class Transformer(nn.Module):
     def __init__(self):

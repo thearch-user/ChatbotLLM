@@ -30,5 +30,6 @@ Thumbs.db
 # ========= Data =========
 datasets/raw/
 datasets/wiki/
+datasets/Python
 *.bin
 *.tmp
