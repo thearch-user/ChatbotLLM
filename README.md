@@ -45,9 +45,13 @@ ChatbotLLM is built on a custom-designed neural network framework, prioritizing 
 
 ## 🔹 What models/weights it supports
 
--   **Custom Architectures**: Primarily designed for the internal `Transformer` implementation.
--   **GPT-2 Compatibility**: Default configuration (`ModelArgs`) supports 124M-style parameters (vocab size 50,257, 12 layers, 12 heads).
--   **Weight Formats**: Supports standard PyTorch `.pth` or `.bin` state dictionaries (requires mapping to custom Tensor objects).
+-   **GPT-2 Family**: Fully compatible with GPT-2, GPT-2 Medium, Large, and XL weights from the [OpenAI GPT-2 Repository](https://github.com/openai/gpt-2) (via Hugging Face).
+-   **Automated Loader**: Use the provided script to download and convert weights into the custom Tensor format:
+    ```bash
+    python scripts/load_gpt2_weights.py gpt2
+    ```
+-   **Custom Architectures**: Primarily designed for the internal `Transformer` implementation, prioritizing educational transparency.
+-   **Weight Formats**: Supports standard PyTorch `.pth` or `.bin` state dictionaries (mapped to custom Tensor objects via the loader).
 -   **Training Data**: Built-in support for Wikipedia, Project Gutenberg, and custom dialogue datasets.
 
 ## 🔹 Sample output interactions

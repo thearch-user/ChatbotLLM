@@ -3,3 +3,4 @@ tokenizers
 fastapi
 uvicorn
 wikipedia-api
+transformers
