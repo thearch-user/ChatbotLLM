@@ -12,6 +12,58 @@ This project aims to develop a comprehensive system for building and deploying a
 -   **Tokenizer**: Custom tokenizer training and implementation for text processing.
 -   **Web Interface**: A modern web application built with React, providing a user-friendly interface to interact with the chatbot.
 
+## 🔹 Quick start in 5 mins
+
+Get the ChatbotLLM up and running locally in just a few steps.
+
+1.  **Install Backend Dependencies**:
+    ```bash
+    pip install -r requirements.txt
+    ```
+2.  **Start the Backend API**:
+    ```bash
+    # From the root directory
+    python backend/main.py
+    ```
+3.  **Setup and Run the Web Interface**:
+    ```bash
+    cd Web
+    npm install
+    npm run dev
+    ```
+4.  **Interact**: Open your browser to `http://localhost:5173` and start chatting!
+
+## 🔹 Architecture overview
+
+ChatbotLLM is built on a custom-designed neural network framework, prioritizing transparency and educational clarity.
+
+-   **Core Engine (`/core`)**: A from-scratch implementation of a Tensor library with automatic differentiation (`autograd.py`), fundamental operations (`ops.py`), and optimizers (`optim.py`).
+-   **Neural Network Layers (`/core/nn`)**: Modular building blocks including Multi-Head Attention, Embeddings, and Linear layers.
+-   **Transformer Architecture (`/model`)**: A standard Transformer implementation using the custom core, featuring `TransformerEncoderBlock` and configurable `ModelArgs`.
+-   **Algorithms (`/algorithms`)**: Extends basic training with Reinforcement Learning (RLHF-ready) and Semi-Supervised Learning (SSL) capabilities.
+-   **Full-Stack Integration**: A FastAPI backend serving the model and a React/Vite frontend for a modern user experience.
+
+## 🔹 What models/weights it supports
+
+-   **Custom Architectures**: Primarily designed for the internal `Transformer` implementation.
+-   **GPT-2 Compatibility**: Default configuration (`ModelArgs`) supports 124M-style parameters (vocab size 50,257, 12 layers, 12 heads).
+-   **Weight Formats**: Supports standard PyTorch `.pth` or `.bin` state dictionaries (requires mapping to custom Tensor objects).
+-   **Training Data**: Built-in support for Wikipedia, Project Gutenberg, and custom dialogue datasets.
+
+## 🔹 Sample output interactions
+
+The current implementation provides a foundation for interaction. Here is what the current API-driven conversation looks like:
+
+**User:**
+> "Hello! Can you tell me about the architecture of this model?"
+
+**ChatbotLLM:**
+> "Received text for prediction: Hello! Can you tell me about the architecture of this model?
+> 
+> Dummy prediction for: 'Hello! Can you tell me about the architecture of this model?'"
+
+*(Note: The model currently returns placeholder responses until weights are loaded and the tokenizer is fully integrated into the backend.)*
+
 ## Project Structure
 ```
 .
