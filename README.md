@@ -68,6 +68,28 @@ The current implementation provides a foundation for interaction. Here is what t
 
 *(Note: The model currently returns placeholder responses until weights are loaded and the tokenizer is fully integrated into the backend.)*
 
+## 🔹 IDE Integration
+
+Bring ChatbotLLM directly into your development workflow. Extensions are located in the `/extensions` directory.
+
+### VS Code
+1. Copy `extensions/vscode` to your local machine.
+2. Open the folder in VS Code.
+3. Press `F5` to open a new window with the extension enabled.
+4. Use `Ctrl+Alt+C` to get completions from your local LLM.
+
+### Neovim
+1. Copy `extensions/neovim/chatbotllm.lua` to your `~/.config/nvim/lua/` directory.
+2. Add `require('chatbotllm')` to your `init.lua`.
+3. Map the completion function:
+   ```lua
+   vim.keymap.set('n', '<leader>cc', require('chatbotllm').complete)
+   ```
+
+### JetBrains (IntelliJ, PyCharm, etc.)
+- Use the built-in **HTTP Client** with the provided `extensions/jetbrains/README.md` instructions to test endpoints.
+- Support for a dedicated JetBrains plugin is in development.
+
 ## Project Structure
 ```
 .

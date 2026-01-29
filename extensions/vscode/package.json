@@ -1,0 +1,31 @@
+{
+    "name": "chatbotllm-vscode",
+    "displayName": "ChatbotLLM VSCode",
+    "description": "Integration for ChatbotLLM into VS Code",
+    "version": "0.1.0",
+    "engines": {
+        "vscode": "^1.75.0"
+    },
+    "categories": [
+        "Programming Languages",
+        "AI"
+    ],
+    "activationEvents": [],
+    "main": "./extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "chatbotllm.complete",
+                "title": "ChatbotLLM: Complete Code"
+            }
+        ],
+        "keybindings": [
+            {
+                "command": "chatbotllm.complete",
+                "key": "ctrl+alt+c",
+                "mac": "cmd+alt+c",
+                "when": "editorTextFocus"
+            }
+        ]
+    }
+}
