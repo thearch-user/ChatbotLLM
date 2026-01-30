@@ -8,7 +8,6 @@ from typing import List
 
 from model.model import Transformer
 from core.tensor import Tensor
-from core.optim import UniversalOptimizer
 from core.ops import cross_entropy
 from tokenizor import tokenizor_train
 
@@ -92,12 +91,10 @@ def train():
     )
     model.train()
 
-    optimizer = UniversalOptimizer(
-        model.parameters(),
+    optimizer = model.get_optimizer(
         lr=LR,
-        method='adam',
-        weight_decay=WEIGHT_DECAY,
-        betas=(0.9, 0.95)
+        momentum=0.9,
+        weight_decay=WEIGHT_DECAY
     )
 
     step = 0

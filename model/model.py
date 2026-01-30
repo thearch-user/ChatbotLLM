@@ -84,3 +84,7 @@ class Transformer:
         params += [self.final_ln_gamma, self.final_ln_beta]
         params += self.head.parameters()
         return params
+
+    def get_optimizer(self, lr=1e-3, momentum=0.9, weight_decay=0.0):
+        from algorithms.SGD import SGD
+        return SGD(self.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
